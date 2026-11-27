@@ -1,0 +1,56 @@
+localization:
+  topics:
+    imu_raw: /sensors/imu/raw
+    
+    wheel_odom: /odom
+    
+    imu: /localization/imu
+    wheel_twist: /localization/wheel_twist
+
+    pose: /localization/odom
+
+inputs_node:
+  ros__parameters:
+    frame_id: base_link
+    # Grad/s -> rad/s (pi / 180). 1.0, sobald vesc_driver rad/s liefert.
+    gyro_scale: 0.017453292519943295
+    # Rauschen der Drehrate im Stand 0.0012-0.0036 rad/s (Median 0.0015,
+    # 5 Fahrten vom 2026-11-19), mit Reserve.
+    rate_variance: 1.0e-5
+    
+    speed_variance: 4.0e-4
+    # Quer faehrt das Fahrzeug nicht: v_y = 0 mit kleiner Varianz.
+    lateral_variance: 1.0e-4
+    bias:
+      # Lernen nach 1 s Stand, nur bei |omega - b| < 0.01 rad/s (B149).
+      alpha: 0.02
+      still_time: 1.0
+      max_rate: 0.01
+      standstill_speed: 0.05
+
+ekf_filter_node:
+  ros__parameters:
+    frequency: 50.0
+    sensor_timeout: 0.1
+    two_d_mode: true
+    # TF odom -> base_link kommt von vesc_to_odom.
+    publish_tf: false
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_link
+    world_frame: odom
+    # Topics aus localization.topics (scenario).
+    # Reihenfolge: x y z, roll pitch yaw, vx vy vz, vroll vpitch vyaw,
+    # ax ay az.
+    twist0_config: [false, false, false,
+                    false, false, false,
+                    true, true, false,
+                    false, false, false,
+                    false, false, false]
+    twist0_queue_size: 5
+    imu0_config: [false, false, false,
+                  false, false, false,
+                  false, false, false,
+                  false, false, true,
+                  false, false, false]
+    imu0_queue_size: 5
